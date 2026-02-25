@@ -1,0 +1,16 @@
+# 가상 환경 및 캐시
+.venv/
+__pycache__/
+*.pyc
+
+# 환경 변수 및 시크릿 키
+.env
+
+# 정훈 님의 개인 자산 데이터 (보안)
+*.csv
+*.xlsx
+*.numbers
+asset_position_*.numbers
+
+# Mac 시스템 파일
+.DS_Store
