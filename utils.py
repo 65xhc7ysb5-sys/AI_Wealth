@@ -13,6 +13,10 @@ def load_data(file_name):
             return pd.DataFrame()
             
         df = pd.read_csv(file_name)
+        
+        # 컬럼명 앞뒤에 숨어있는 띄어쓰기/공백을 완벽하게 제거합니다!
+        df.columns = df.columns.str.strip()
+                
         total_mask = df['Ticker'].isna() | (df['Ticker'].astype(str).str.strip() == '') | (df['Ticker'].astype(str).str.lower() == 'nan')
         df = df[~total_mask].copy()
         df['Ticker'] = df['Ticker'].astype(str).str.replace('.0', '', regex=False)
@@ -55,8 +59,8 @@ def create_vector_db():
         return None
 
 def color_diff_yield(val):
-    if val < 0: return 'color: #2ecc71; font-weight: bold;'
-    elif val > 0: return 'color: #e74c3c; font-weight: bold;'
+    if val < 0: return 'color: #e74c3c; font-weight: bold;'
+    elif val > 0: return 'color: #2ecc71; font-weight: bold;'
     return ''
 
 display_cols = ['ETF Name', 'Weight(%)', 'Budget', 'Actual', 'Difference', 'Yield(%)']
