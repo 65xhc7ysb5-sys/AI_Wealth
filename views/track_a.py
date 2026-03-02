@@ -23,7 +23,7 @@ def get_live_price(ticker):
 # ==========================================
 # 📊 데이터 로드 및 실시간 지표 계산
 # ==========================================
-df_isa = load_data('data/asset_position_isa.csv')
+df_isa = load_data('isa') 
 live_prices = {}
 if not df_isa.empty:
     live_actuals = []
@@ -221,31 +221,12 @@ if not df_isa.empty:
 
     st.write("---")
     st.write("**[Step 3] 포트폴리오 장부 갱신 (평단가 적용)**")
-    if st.button("💾 매매 완료 및 포트폴리오(CSV) 갱신하기"):
+    
+    if st.button("💾 매매 완료 및 포트폴리오(DB) 갱신하기"):
         try:
-            csv_path = 'data/asset_position_isa.csv'
-            original_df = pd.read_csv(csv_path)
-            original_df['Ticker'] = original_df['Ticker'].astype(str).str.replace('.0', '', regex=False)
-            original_df.columns = original_df.columns.str.strip()
-            
-            for idx, row in action_df.iterrows():
-                if row['Action Unit'] == 0: continue
-                mask = original_df['Ticker'] == str(idx)
-                if mask.any():
-                    curr_unit, curr_budget = float(original_df.loc[mask, 'Unit'].values[0]), float(original_df.loc[mask, 'Budget'].values[0])
-                    action_u, live_p = row['Action Unit'], row['Live Price']
-                    avg_price = curr_budget / curr_unit if curr_unit > 0 else live_p
-                    
-                    if action_u > 0:
-                        new_unit, new_budget = curr_unit + action_u, curr_budget + (action_u * live_p)
-                    else:
-                        new_unit = curr_unit + action_u
-                        new_budget = 0 if new_unit <= 0 else curr_budget + (action_u * avg_price) 
-                    
-                    original_df.loc[mask, 'Unit'], original_df.loc[mask, 'Budget'] = new_unit, new_budget
-            
-            original_df.to_csv(csv_path, index=False)
-            st.success("🎉 갱신이 완료되었습니다!")
+            from utils import save_portfolio # 상단에 import 하셔도 됩니다.
+            save_portfolio('isa', action_df, df_isa)
+            st.success("🎉 DB 갱신이 완료되었습니다!")
             time.sleep(1)
             st.rerun()
         except Exception as e:

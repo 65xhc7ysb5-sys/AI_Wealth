@@ -2,9 +2,9 @@ import streamlit as st
 from utils import load_data
 
 # 데이터 로드
-df_isa = load_data('data/asset_position_isa.csv')
-df_pension = load_data('data/asset_position_pension.csv')
-df_irp = load_data('data/asset_position_irp.csv')
+df_isa = load_data('isa') 
+df_pension = load_data('irp')
+df_irp = load_data('pension')
 
 isa_total = df_isa['Actual'].sum() if not df_isa.empty else 0
 pension_total = df_pension['Actual'].sum() if not df_pension.empty else 0

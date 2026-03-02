@@ -48,8 +48,8 @@ def process_portfolio(df):
 # ==========================================
 # 📊 데이터 로드 및 실시간 지표 계산 (IRP + 연금저축 통합)
 # ==========================================
-df_irp_raw = load_data('data/asset_position_irp.csv')
-df_pension_raw = load_data('data/asset_position_pension.csv')
+df_irp_raw = load_data('irp')
+df_pension_raw = load_data('pension')
 
 df_irp, irp_total = process_portfolio(df_irp_raw)
 df_pension, pension_total = process_portfolio(df_pension_raw)

@@ -14,3 +14,7 @@ asset_position_*.numbers
 
 # Mac 시스템 파일
 .DS_Store
+
+# Database
+*.db
+*.sqlite3
