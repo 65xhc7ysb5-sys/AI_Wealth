@@ -1,6 +1,13 @@
 import sqlite3
 import pandas as pd
 import os
+import streamlit as st
+
+# 💡 AI 수석코치 (RAG)용 라이브러리 추가
+from langchain_community.document_loaders import TextLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_community.vectorstores import FAISS
 
 DB_PATH = 'portfolio.db'
 DATA_DIR = 'data' 
@@ -126,3 +133,44 @@ def color_diff_yield(val):
         val = float(val.replace(',', '').replace('%', '').replace(' 원', '').strip())
     color = '#e74c3c' if val < 0 else '#2ecc71' if val > 0 else 'gray'
     return f'color: {color}; font-weight: bold;'
+
+
+# ==========================================
+# 🤖 AI 수석코치용 벡터 데이터베이스 (RAG 엔진)
+# ==========================================
+@st.cache_resource # 💡 Streamlit 앱이 재실행될 때마다 매번 DB를 새로 만들지 않도록 캐싱(메모리 저장)합니다.
+def create_vector_db(file_path="data/coach_knowledge.txt"):
+    """
+    텍스트 문서를 읽어 Gemini 임베딩을 통해 FAISS 벡터 DB로 변환합니다.
+    (ai_coach.py 에서 이 함수를 호출하여 사용합니다)
+    """
+    # 1. 문서가 없다면 에러가 나지 않도록 기본 지식 파일을 자동 생성합니다.
+    if not os.path.exists(file_path):
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write("이 문서는 AI 수석코치를 위한 기본 지식 베이스입니다. 사용자의 ISA, IRP, 연금저축 포트폴리오를 분석하고 최적의 자산 배분 조언을 제공합니다.")
+    
+    # 2. 문서 로드 및 쪼개기 (Chunking)
+    loader = TextLoader(file_path, encoding="utf-8")
+    documents = loader.load()
+    
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000, 
+        chunk_overlap=100
+    )
+    docs = text_splitter.split_documents(documents)
+    
+    # 3. Gemini 임베딩 모델 세팅
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY가 .env 파일에 설정되어 있지 않습니다.")
+        
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model="models/gemini-embedding-001", # 💡 구글의 최신 텍스트 임베딩 모델로 교체!
+        google_api_key=api_key
+    )
+    
+    # 4. FAISS 벡터 데이터베이스 생성 및 반환
+    vector_db = FAISS.from_documents(docs, embeddings)
+    
+    return vector_db

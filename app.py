@@ -8,7 +8,6 @@ st.set_page_config(page_title="Linchpin Wealth", page_icon="🎯", layout="wide"
 
 st.sidebar.title("🎯 Linchpin Wealth")
 st.sidebar.markdown("대한민국 상위 10%를 위한 AI 자산관리")
-st.sidebar.divider()
 
 # 페이지 라우팅 설정
 pages = {
@@ -26,7 +25,6 @@ pages = {
 
 pg = st.navigation(pages)
 
-st.sidebar.divider()
 st.sidebar.caption("© 2026 Linchpin Wealth MVP")
 
 pg.run()
