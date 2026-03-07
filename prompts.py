@@ -5,7 +5,7 @@ from datetime import datetime
 # 🧠 AI_Wealth 프로젝트 통합 프롬프트 관리소
 # ==========================================
 
-def get_news_briefing_prompt(my_holdings_str, macro_news_text, portfolio_news_text):
+def get_news_briefing_prompt(my_holdings_str, macro_news_text, global_news_text, portfolio_news_text):
     """홈 대시보드의 뉴스 큐레이션을 위한 프롬프트 (JSON 출력 강제 및 퀄리티 통제)"""
     today_date = datetime.now().strftime("%Y년 %m월 %d일") 
 
@@ -29,17 +29,23 @@ def get_news_briefing_prompt(my_holdings_str, macro_news_text, portfolio_news_te
 [JSON 출력 포맷]
 {{
   "macro_news": [
-    {{"title": "정제된 경제 기사 제목 1", "summary": "시장에 미치는 영향 중심의 날카로운 요약", "link": "기사 링크"}}
+    {{"title": "정제된 경제 기사 제목", "summary": "시장에 미치는 영향 중심의 날카로운 요약", "link": "기사 링크"}}
+  ],
+  "global_news": [
+    {{"title": "글로벌 매체 기사 제목 (영문 유지)", "summary": "영향 중심의 날카로운 요약 (영문 유지)", "link": "기사 링크"}}
   ],
   "portfolio_news": [
-    {{"title": "내 종목 관련 기사 제목 1", "summary": "이 종목의 주가/배당 등에 미칠 영향 요약", "related_etfs": "연관된 내 보유 종목명들", "link": "기사 링크"}}
+    {{"title": "내 종목 관련 기사 제목", "summary": "이 종목의 주가/배당 등에 미칠 영향 요약", "related_etfs": "연관된 내 보유 종목명들", "link": "기사 링크"}}
   ]
 }}
 
-[수집된 데이터 A: 거시경제 뉴스]
+[수집된 데이터 A: 국내 거시경제 뉴스]
 {macro_news_text}
 
-[수집된 데이터 B: 고객 보유 종목 관련 뉴스]
+[수집된 데이터 B: 글로벌 경제 뉴스]
+{global_news_text}
+
+[수집된 데이터 C: 고객 보유 종목 관련 뉴스]
 {portfolio_news_text}
 """
 

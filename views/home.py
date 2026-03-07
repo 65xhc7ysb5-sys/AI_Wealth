@@ -78,6 +78,7 @@ for i, (acc_name, acc_type) in enumerate(accounts.items()):
 def get_ai_news_briefing(raw_etfs, search_keywords):
     naver_id = os.getenv("NAVER_CLIENT_ID")
     naver_secret = os.getenv("NAVER_CLIENT_SECRET")
+    news_api_key = os.getenv("NEWS_API_KEY")
     
     if not naver_id or not naver_secret:
         return None
@@ -130,9 +131,45 @@ def get_ai_news_briefing(raw_etfs, search_keywords):
             print(f"News Fetch Error ({query}): {e}")
             return ""
 
-    # 💡 2. 'OR' 연산자 제거 및 단일 키워드 기반으로 변경
+    def fetch_global_news():
+        if not news_api_key:
+            return "" 
+            
+        url = "https://newsapi.org/v2/everything"
+        top_tier_domains = "wsj.com,bloomberg.com,reuters.com,cnbc.com,ft.com,economist.com,bbc.com"
+        params = {
+            "q": "economy OR stock market OR federal reserve OR inflation",
+            "domains": top_tier_domains,
+            "sortBy": "publishedAt",
+            "language": "en",
+            "pageSize": 5, 
+            "apiKey": news_api_key
+        }
+        try:
+            res = requests.get(url, params=params)
+            res.raise_for_status()
+            articles = res.json().get("articles", [])
+            
+            text = "\n[🌍 글로벌 핵심 경제 원문 (Top Tier 매체)]\n"
+            for i, article in enumerate(articles):
+                source = article.get("source", {}).get("name", "Unknown")
+                date = article.get("publishedAt", "")[:10]
+                title = article.get("title", "")
+                desc = article.get("description", "")
+                url = article.get("url", "#")
+                text += f"[글로벌 매체: {source}]\n발행일: {date}\n제목: {title}\n링크: {url}\n내용: {desc}\n---\n"
+            return text
+        except Exception as e:
+            print(f"Global News Error: {e}")
+            return ""
+
+    # 💡 1. 국내 거시경제 뉴스
     macro_news_text = fetch_news("증시 전망", 15)
+
+    # 💡 2. 글로벌 경제 뉴스 (국내 뉴스와 합치지 않고 별도로 분리!)
+    global_news_text = fetch_global_news()
     
+    # 💡 3. 내 종목 뉴스
     portfolio_news_text = ""
     my_holdings_str = "보유 종목 없음"
     
@@ -148,7 +185,7 @@ def get_ai_news_briefing(raw_etfs, search_keywords):
 
     try:
         llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.0)
-        prompt = get_news_briefing_prompt(my_holdings_str, macro_news_text, portfolio_news_text)
+        prompt = get_news_briefing_prompt(my_holdings_str, macro_news_text, global_news_text, portfolio_news_text)
         
         ai_response = llm.invoke(prompt)
         return ai_response.content
@@ -189,6 +226,7 @@ if news_briefing_raw:
 
         news_data = json.loads(json_text)
 
+        # 💡 [섹션 1] 국내 거시경제 요약
         st.markdown("#### 🌍 거시경제 핵심 요약")
         if "macro_news" in news_data and news_data["macro_news"]:
             for news in news_data["macro_news"]:
@@ -200,6 +238,19 @@ if news_briefing_raw:
 
         st.markdown("---")
 
+        # 💡 [섹션 2] 글로벌 경제 요약 (새로 추가된 섹션!)
+        st.markdown("#### 🌎 글로벌 경제 요약 (Top Tier)")
+        if "global_news" in news_data and len(news_data["global_news"]) > 0:
+            for news in news_data["global_news"]:
+                with st.expander(f"📰 {news.get('title', '제목 없음')}"):
+                    st.write(news.get("summary", "내용이 없습니다."))
+                    st.markdown(f"[기사 원문 보기]({news.get('link', '#')})")
+        else:
+            st.info("현재 수집된 글로벌 경제 뉴스가 기준에 부합하지 않습니다. (.env 파일의 NEWS_API_KEY를 확인하세요)")
+
+        st.markdown("---")
+        
+        # 💡 [섹션 3] 내 종목 맞춤 시황
         st.markdown("#### 💼 내 보유 종목 맞춤 시황")
         if "portfolio_news" in news_data and news_data["portfolio_news"]:
             for news in news_data["portfolio_news"]:
